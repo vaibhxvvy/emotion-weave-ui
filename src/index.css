@@ -8,89 +8,65 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Emotic Premium Color System - v0.app inspired */
+    /* Deep teal black foundation */
+    --color-deep-teal: 185 56% 8%;
+    --color-emotion-teal: 178 73% 27%;
+    --color-copper-gold: 27 35% 59%;
+    --color-warm-sand: 28 100% 83%;
+    --color-frosted-silver: 168 39% 88%;
+    --color-glass-white: 0 0% 98%;
+    --color-soft-black: 185 40% 12%;
+    
+    /* Semantic tokens */
+    --background: var(--color-deep-teal);
+    --foreground: var(--color-glass-white);
+    
+    --card: 185 45% 10%;
+    --card-foreground: var(--color-glass-white);
+    
+    --popover: 185 50% 12%;
+    --popover-foreground: var(--color-glass-white);
+    
+    --primary: var(--color-emotion-teal);
+    --primary-foreground: var(--color-glass-white);
+    
+    --secondary: var(--color-copper-gold);
+    --secondary-foreground: var(--color-deep-teal);
+    
+    --muted: 185 30% 20%;
+    --muted-foreground: 168 20% 70%;
+    
+    --accent: var(--color-warm-sand);
+    --accent-foreground: var(--color-deep-teal);
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: var(--color-glass-white);
+    
+    --border: 185 30% 18%;
+    --input: 185 25% 15%;
+    --ring: var(--color-emotion-teal);
+    
+    --radius: 1rem;
+    
+    /* Glass morphism */
+    --glass-bg: 185 40% 12% / 0.4;
+    --glass-border: 178 50% 50% / 0.1;
+    --glass-blur: 20px;
+    
+    /* Premium shadows */
+    --shadow-glow: 0 0 40px hsl(var(--color-emotion-teal) / 0.3);
+    --shadow-float: 0 10px 40px -10px hsl(185 50% 5% / 0.5);
+    --shadow-elegant: 0 20px 60px -20px hsl(var(--color-copper-gold) / 0.2);
+    
+    /* Animations */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Gradients */
+    --gradient-emotion: linear-gradient(135deg, hsl(var(--color-emotion-teal)) 0%, hsl(var(--color-copper-gold)) 100%);
+    --gradient-ambient: linear-gradient(180deg, hsl(185 56% 8%) 0%, hsl(185 50% 12%) 100%);
+    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(var(--color-emotion-teal) / 0.15) 0%, transparent 70%);
   }
 }
 
@@ -98,8 +74,78 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cabin', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: 0.01em;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', 'Cabin', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
+
+@layer utilities {
+  .glass-panel {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 20px hsl(var(--color-emotion-teal) / 0.5);
+  }
+  
+  .hover-lift {
+    transition: var(--transition-smooth);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float);
+  }
+  
+  .gradient-text {
+    background: var(--gradient-emotion);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .ambient-glow {
+    position: relative;
+  }
+  
+  .ambient-glow::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: var(--gradient-glow);
+    opacity: 0.3;
+    filter: blur(60px);
+    z-index: -1;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}
+
