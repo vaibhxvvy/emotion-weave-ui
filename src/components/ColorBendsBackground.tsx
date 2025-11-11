@@ -19,19 +19,29 @@ export const ColorBendsBackground = () => {
     resize();
     window.addEventListener('resize', resize);
 
-    // Gradient positions
+    // Gradient positions - more vibrant and dynamic
     const gradients = [
-      { x: 0.2, y: 0.3, size: 0.4, color: 'rgba(17, 100, 102, 0.15)' }, // emotion teal
-      { x: 0.7, y: 0.6, size: 0.35, color: 'rgba(217, 176, 140, 0.12)' }, // copper gold
-      { x: 0.5, y: 0.8, size: 0.3, color: 'rgba(255, 203, 169, 0.08)' }, // warm sand
+      { x: 0.15, y: 0.25, size: 0.5, color: 'rgba(17, 100, 102, 0.25)' }, // emotion teal - stronger
+      { x: 0.75, y: 0.55, size: 0.45, color: 'rgba(217, 176, 140, 0.18)' }, // copper gold - stronger
+      { x: 0.5, y: 0.75, size: 0.4, color: 'rgba(255, 203, 169, 0.12)' }, // warm sand
+      { x: 0.85, y: 0.15, size: 0.35, color: 'rgba(209, 232, 226, 0.1)' }, // frosted silver
     ];
 
-    // Animate gradients
+    // Animate gradients - slower, more organic movement
     gradients.forEach((grad, i) => {
       gsap.to(grad, {
-        x: `+=${Math.random() * 0.2 - 0.1}`,
-        y: `+=${Math.random() * 0.2 - 0.1}`,
-        duration: 8 + i * 2,
+        x: `+=${Math.random() * 0.3 - 0.15}`,
+        y: `+=${Math.random() * 0.3 - 0.15}`,
+        duration: 12 + i * 3,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+      
+      // Add size pulsing
+      gsap.to(grad, {
+        size: `+=${Math.random() * 0.1 - 0.05}`,
+        duration: 10 + i * 2,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut',
