@@ -30,15 +30,26 @@ A premium emotion-driven AI art generation platform. Express yourself through te
 - **Python** 3.8+ and pip (backend)
 - **Git** for version control
 
-### Frontend Setup
+### Frontend Setup (Lovable)
 
+This project is built with Lovable and is ready to run:
+
+1. **Open in Lovable:** The project is already set up in your Lovable workspace
+2. **Preview:** Click the preview window to see your app live
+3. **Edit:** Use Lovable's AI to make changes or edit code in Dev Mode
+
+**Running Locally (Optional):**
 ```bash
-# Clone the repository
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+# Clone from your GitHub (if connected)
+git clone <YOUR_GITHUB_URL>
+cd emotic
 
 # Install dependencies
 npm install
+
+# Create .env file
+cp .env.example .env
+# Edit .env and set VITE_API_URL=http://localhost:5000
 
 # Start development server
 npm run dev
@@ -46,9 +57,53 @@ npm run dev
 
 The frontend will run at `http://localhost:5173`
 
-### Backend Setup (Flask)
+### Backend Setup (Your Flask Backend)
 
-See the **Flask Backend Integration** section below for detailed instructions.
+1. **Extract your Flask backend** from the uploaded ZIP file
+2. **Install dependencies:**
+```bash
+cd your-flask-backend
+pip install -r requirements.txt
+```
+
+3. **Configure environment variables:**
+```bash
+# Create .env file in Flask backend folder
+cp .env.example .env
+```
+
+4. **Edit `.env` with your API keys:**
+```env
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here
+OPENAI_API_KEY=sk-your-openai-key
+DATABASE_URL=sqlite:///emotic.db  # or PostgreSQL URL
+ALLOWED_ORIGINS=http://localhost:5173,https://your-project.lovable.app
+```
+
+5. **Run Flask server:**
+```bash
+python app.py
+# Or with gunicorn
+gunicorn app:app --bind 0.0.0.0:5000
+```
+
+The backend will run at `http://localhost:5000`
+
+### Testing the Connection
+
+1. Start both frontend (Lovable or `npm run dev`) and backend (`python app.py`)
+2. Open `http://localhost:5173` (or Lovable preview)
+3. Click **"Try Now"** to enter guest mode
+4. Type an emotion in the chat (e.g., "I feel overwhelmed with joy")
+5. Check browser console (F12) for API requests
+6. Check Flask console for incoming requests
+
+**Expected Flow:**
+- User message appears immediately
+- Loading animation shows
+- Flask backend processes emotion and generates art
+- AI response with generated image appears
 
 ---
 
@@ -177,14 +232,20 @@ Response (201 Created):
 
 ### 1. Update API Base URL
 
-Edit `src/pages/Chat.tsx` to point to your Flask backend:
+The API URL is configured via environment variable. **No need to edit code!**
 
+**Create `.env` file** in your project root:
+```env
+# Development
+VITE_API_URL=http://localhost:5000
+
+# Production (update when deploying)
+# VITE_API_URL=https://your-backend.railway.app
+```
+
+The app automatically uses this URL from `src/lib/api.ts`:
 ```typescript
-// Find this line (around line 30-35)
-const API_BASE_URL = 'http://localhost:5000'; // Change to your Flask server URL
-
-// For production
-const API_BASE_URL = 'https://your-flask-api.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 ```
 
 ### 2. CORS Setup (Flask Backend)
@@ -258,107 +319,155 @@ python app.py
 
 ## 📡 API Integration Details
 
-### Frontend Files to Customize
+### API Service Layer (`src/lib/api.ts`)
+
+All API calls are centralized in `src/lib/api.ts`. The frontend components automatically use this service.
+
+**Key Functions:**
+- `generateArt(prompt, mode, emotion)` - Generate art from emotion
+- `getLibrary(limit, offset)` - Fetch user's artwork
+- `getHistory(limit, offset)` - Get generation history
+- `login(email, password)` - User login
+- `signup(name, email, password)` - User registration
+- `logout()` - Clear session
+- `isAuthenticated()` - Check if user is logged in
+- `getCurrentUser()` - Get current user data
+
+### Frontend Components (Already Connected!)
 
 #### 1. **Chat Component** (`src/pages/Chat.tsx`)
-This is where API calls are made. Update these sections:
+✅ **Already connected to Flask backend via `generateArt()` API**
+
+How it works:
 
 ```typescript
-// Line ~30: Set your API URL
-const API_BASE_URL = 'http://localhost:5000';
+// User types emotion → handleSend() called
+const handleSend = async () => {
+  // Add user message to chat
+  setMessages((prev) => [...prev, userMessage]);
+  
+  // Call Flask backend API
+  const result = await generateArt({
+    prompt: input,
+    mode: 'text',
+    emotion: 'auto-detect',
+  });
 
-// Line ~50-80: handleSubmit function
-// This sends the emotion prompt to Flask
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!input.trim()) return;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionStorage.getItem('emotic_token') || ''}`,
-      },
-      body: JSON.stringify({
-        prompt: input,
-        mode: 'text',
-        emotion: 'auto-detect',
-      }),
+  if (result.success && result.data) {
+    // Add AI response with generated art
+    setMessages((prev) => [...prev, {
+      type: 'assistant',
+      content: `I've captured your ${result.data.emotion} emotion...`,
+      emotion: result.data.emotion,
+      imageUrl: result.data.image_url, // From Flask backend
+    }]);
+  } else {
+    // Show error toast
+    toast({
+      title: "Generation failed",
+      description: result.error,
+      variant: "destructive",
     });
-
-    const data = await response.json();
-    
-    if (data.success) {
-      // Handle successful art generation
-      setMessages([...messages, {
-        id: Date.now(),
-        text: input,
-        sender: 'user',
-      }, {
-        id: Date.now() + 1,
-        text: `Generated art for emotion: ${data.data.emotion}`,
-        sender: 'ai',
-        imageUrl: data.data.image_url,
-      }]);
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    // Show error toast to user
   }
 };
+```
+
+**What Flask backend should return:**
+```json
+{
+  "success": true,
+  "data": {
+    "image_url": "https://your-cdn.com/art.jpg",
+    "emotion": "joy",
+    "emotion_intensity": 0.85,
+    "prompt": "I feel happy",
+    "created_at": "2025-11-12T10:30:00Z",
+    "id": "art_12345"
+  }
+}
 ```
 
 #### 2. **Library Component** (`src/pages/Library.tsx`)
-Fetch and display user's artwork:
+✅ **Already connected to Flask backend via `getLibrary()` API**
 
+How it works:
 ```typescript
-// Add useEffect to load library
+// On page load, fetch user's library
 useEffect(() => {
-  const loadLibrary = async () => {
-    const token = sessionStorage.getItem('emotic_token');
-    if (!token) return;
+  // Redirect if not authenticated
+  if (!isAuthenticated()) {
+    navigate('/');
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/library`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setArtworks(data.data.artworks);
-    } catch (error) {
-      console.error('Failed to load library:', error);
-    }
-  };
-
-  loadLibrary();
+  // Fetch library from Flask backend
+  const result = await getLibrary(50, 0);
+  
+  if (result.success && result.data) {
+    setArtworks(result.data.artworks);
+  }
 }, []);
 ```
 
-#### 3. **Auth Modal** (`src/components/AuthModal.tsx`)
-Handle login/signup:
+**What Flask backend should return:**
+```json
+{
+  "success": true,
+  "data": {
+    "artworks": [
+      {
+        "id": "art_123",
+        "image_url": "https://...",
+        "emotion": "joy",
+        "prompt": "I feel happy",
+        "created_at": "2025-11-12T10:30:00Z"
+      }
+    ],
+    "total": 45,
+    "limit": 50,
+    "offset": 0
+  }
+}
+```
 
+#### 3. **Auth Modal** (`src/components/AuthModal.tsx`)
+✅ **Already connected to Flask backend via `login()` and `signup()` APIs**
+
+How it works:
 ```typescript
-const handleLogin = async (email: string, password: string) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+// User submits login form
+const handleLogin = async (e) => {
+  const email = formData.get('email');
+  const password = formData.get('password');
+  
+  // Call Flask backend
+  const result = await login(email, password);
+  
+  if (result.success) {
+    // Auto-stored in sessionStorage by api.ts
+    toast({ title: "Login successful" });
+    navigate('/chat');
+  } else {
+    toast({ 
+      title: "Login failed", 
+      description: result.error,
+      variant: "destructive" 
     });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      sessionStorage.setItem('emotic_token', data.token);
-      sessionStorage.setItem('emotic_user', JSON.stringify(data.user));
-      // Redirect to /chat
-    }
-  } catch (error) {
-    console.error('Login failed:', error);
   }
 };
+```
+
+**What Flask backend should return:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
+}
 ```
 
 ---
@@ -378,6 +487,111 @@ const handleLogin = async (email: string, password: string) => {
 3. On success, store JWT token in `sessionStorage`
 4. All API requests include `Authorization: Bearer <token>`
 5. User's artwork is saved to their account
+
+---
+
+## 🐙 GitHub Integration & Going Live
+
+### Connect Your Project to GitHub
+
+**Benefits:**
+- Version control for all code
+- Auto-sync between Lovable and GitHub
+- Easy collaboration with team
+- Required for most hosting platforms
+- Backup of all your work
+
+**Steps to Connect:**
+
+1. **In Lovable Editor:** Click **GitHub** button (top right corner)
+2. **Authorize:** Connect and authorize Lovable GitHub App
+3. **Create Repository:** Select your account/organization
+4. **Done!** All changes auto-sync bidirectionally
+
+**After Connection:**
+- Every change in Lovable → Auto-pushes to GitHub
+- Every push to GitHub → Auto-syncs to Lovable
+- View code at: `https://github.com/your-username/your-repo`
+
+### Deploy Your Flask Backend via GitHub
+
+Once your backend code is on GitHub:
+
+**Railway (Recommended):**
+1. Go to [railway.app](https://railway.app)
+2. **New Project → Deploy from GitHub**
+3. Select your Flask backend repository
+4. Railway auto-detects Python and installs dependencies
+5. Add environment variables in Railway dashboard
+6. Deploy! Get URL like `https://your-app.up.railway.app`
+
+**Render:**
+1. Go to [render.com](https://render.com)
+2. **New → Web Service → Connect Repository**
+3. Select your Flask backend repo
+4. Configure build/start commands
+5. Add environment variables
+6. Deploy!
+
+### Make Your Website Live (Complete Flow)
+
+**Step 1: Deploy Backend**
+```bash
+# Option A: Railway CLI
+cd your-flask-backend
+railway login
+railway init
+railway up
+
+# Option B: GitHub + Railway Dashboard
+# Push to GitHub → Connect repo in Railway → Deploy
+```
+
+**Step 2: Get Backend URL**
+- Railway: `https://your-app.up.railway.app`
+- Render: `https://your-app.onrender.com`
+- Heroku: `https://your-app.herokuapp.com`
+
+**Step 3: Update Frontend Environment**
+
+In Lovable project root, create/update `.env`:
+```env
+VITE_API_URL=https://your-app.up.railway.app
+```
+
+**Step 4: Deploy Frontend**
+
+In Lovable:
+1. Click **Publish** button (top right)
+2. First time: Your app gets deployed to `https://your-project.lovable.app`
+3. After changes: Click **Update** to push updates live
+
+**Step 5: Test Production**
+1. Visit `https://your-project.lovable.app`
+2. Click "Try Now" (guest mode)
+3. Type an emotion → Check if art generates
+4. Test Login/Signup
+5. Check Library page (requires login)
+
+### Custom Domain (Optional)
+
+**Requirements:**
+- Lovable paid plan ($20/month)
+- Own domain from registrar (Namecheap, GoDaddy, etc.)
+
+**Setup:**
+1. Lovable: **Project → Settings → Domains**
+2. Add your domain (e.g., `emotic.com`)
+3. Configure DNS at your registrar:
+   ```
+   Type: CNAME
+   Name: @ (or subdomain like "app")
+   Value: your-project.lovable.app
+   ```
+4. Wait 5-60 minutes for DNS propagation
+5. SSL auto-generated by Lovable
+
+**Result:** Access your app at `https://emotic.com` 🎉
 
 ---
 
@@ -451,51 +665,61 @@ if __name__ == '__main__':
 
 ## 🚢 Deployment
 
-### Frontend Deployment (Lovable)
+### Quick Deployment Overview
 
-1. Click **Publish** button in Lovable
-2. Your frontend is deployed to `https://your-project.lovable.app`
-3. Update API_BASE_URL to your production Flask URL
+1. **Deploy Flask Backend** → Get backend URL
+2. **Update Frontend `.env`** → Set `VITE_API_URL` to backend URL
+3. **Deploy Frontend** → Click Update in Lovable
 
-### Backend Deployment Options
+### Detailed Deployment Guide
 
-**Option 1: Railway**
+👉 **[Complete Deployment Guide](./DEPLOYMENT.md)** - Step-by-step instructions for all platforms
+
+**Quick Links:**
+- [Frontend Deployment (Lovable)](./DEPLOYMENT.md#frontend-deployment-lovable)
+- [Backend Deployment Options](./DEPLOYMENT.md#backend-deployment-options)
+- [Environment Configuration](./DEPLOYMENT.md#environment-configuration)
+- [GitHub Integration](./DEPLOYMENT.md#github-integration)
+- [Production Checklist](./DEPLOYMENT.md#production-checklist)
+
+### Recommended: Railway (Easiest)
+
+**1. Deploy Flask Backend to Railway:**
 ```bash
 # Install Railway CLI
 npm i -g @railway/cli
+
+# Navigate to your Flask backend folder
+cd your-flask-backend
 
 # Login and deploy
 railway login
 railway init
 railway up
+
+# Set environment variables
+railway variables set FLASK_ENV=production
+railway variables set SECRET_KEY=your-secret-key
+railway variables set OPENAI_API_KEY=sk-...
+railway variables set ALLOWED_ORIGINS=https://your-project.lovable.app
+
+# Get your backend URL
+railway status
+# Example: https://your-app.up.railway.app
 ```
 
-**Option 2: Heroku**
-```bash
-heroku create your-emotic-api
-git push heroku main
+**2. Update Frontend Environment:**
+
+In Lovable, create/update `.env`:
+```env
+VITE_API_URL=https://your-app.up.railway.app
 ```
 
-**Option 3: DigitalOcean App Platform**
-- Connect your Git repository
-- Select Python as runtime
-- Deploy automatically
+**3. Deploy Frontend:**
 
-**Option 4: AWS EC2 + Nginx**
-- Traditional server setup with full control
+Click **Update** in Lovable's publish dialog.
 
-### Production Environment Variables
-
-After deploying Flask backend, set these environment variables:
-
-```bash
-# Railway/Heroku/DO
-FLASK_ENV=production
-SECRET_KEY=your-production-secret-key
-DATABASE_URL=postgresql://...
-OPENAI_API_KEY=sk-...
-ALLOWED_ORIGINS=https://your-project.lovable.app
-```
+**Done!** Your app is live at `https://your-project.lovable.app`
 
 ---
 

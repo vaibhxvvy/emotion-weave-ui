@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { login, signup } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthModalProps {
   open: boolean;
@@ -15,35 +17,79 @@ interface AuthModalProps {
 export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      const result = await login(email, password);
+      
+      if (result.success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to Emotic",
+        });
+        onOpenChange(false);
+        navigate('/chat');
+      } else {
+        toast({
+          title: "Login failed",
+          description: result.error || "Please check your credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Login successful",
-        description: "Welcome back to Emotic",
+        title: "Connection error",
+        description: "Make sure your Flask backend is running",
+        variant: "destructive",
       });
-      onOpenChange(false);
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      const result = await signup(name, email, password);
+      
+      if (result.success) {
+        toast({
+          title: "Account created",
+          description: "Welcome to Emotic",
+        });
+        onOpenChange(false);
+        navigate('/chat');
+      } else {
+        toast({
+          title: "Signup failed",
+          description: result.error || "Please try again",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Account created",
-        description: "Welcome to Emotic",
+        title: "Connection error",
+        description: "Make sure your Flask backend is running",
+        variant: "destructive",
       });
-      onOpenChange(false);
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,6 +115,7 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
                     <Label htmlFor="login-email">Email</Label>
                     <Input
                       id="login-email"
+                      name="email"
                       type="email"
                       placeholder="you@example.com"
                       required
@@ -79,6 +126,7 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
                     <Label htmlFor="login-password">Password</Label>
                     <Input
                       id="login-password"
+                      name="password"
                       type="password"
                       placeholder="••••••••"
                       required
@@ -101,6 +149,7 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
                     <Label htmlFor="signup-name">Name</Label>
                     <Input
                       id="signup-name"
+                      name="name"
                       type="text"
                       placeholder="Your name"
                       required
@@ -111,6 +160,7 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
+                      name="email"
                       type="email"
                       placeholder="you@example.com"
                       required
@@ -121,9 +171,11 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
                     <Label htmlFor="signup-password">Password</Label>
                     <Input
                       id="signup-password"
+                      name="password"
                       type="password"
                       placeholder="••••••••"
                       required
+                      minLength={6}
                       className="glass-panel border-border/50 focus:border-primary"
                     />
                   </div>

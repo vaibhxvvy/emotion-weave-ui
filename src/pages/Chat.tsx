@@ -7,6 +7,7 @@ import { AuthModal } from '@/components/AuthModal';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { HiMicrophone, HiPaperAirplane } from 'react-icons/hi2';
+import { generateArt } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -52,21 +53,59 @@ const Chat = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
-      const aiMessage: Message = {
+    try {
+      // Call Flask backend API
+      const result = await generateArt({
+        prompt: currentInput,
+        mode: 'text',
+        emotion: 'auto-detect',
+      });
+
+      if (result.success && result.data) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: `I've captured your ${result.data.emotion} emotion with an intensity of ${(result.data.emotion_intensity * 100).toFixed(0)}%. Here's your art:`,
+          emotion: result.data.emotion,
+          imageUrl: result.data.image_url,
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+      } else {
+        // Error handling
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: result.error || 'Sorry, I couldn\'t generate art at this moment. Please try again.',
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        
+        toast({
+          title: "Generation failed",
+          description: result.error || "Please check your backend connection",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Art generation error:', error);
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `I sense a mix of emotions in your message. Let me create something that captures this feeling...`,
-        emotion: 'contemplative',
-        imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=800&fit=crop', // Placeholder
+        content: 'Connection error. Please make sure your Flask backend is running.',
       };
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+      
+      toast({
+        title: "Connection error",
+        description: "Make sure your Flask backend is running on the configured port",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleVoiceInput = () => {
